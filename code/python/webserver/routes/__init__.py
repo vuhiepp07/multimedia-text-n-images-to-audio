@@ -8,6 +8,7 @@ from .a2a import setup_a2a_routes
 from .conversation import setup_conversation_routes
 from .chat import setup_chat_routes
 from .oauth import setup_oauth_routes
+from core.image_handler import setup_image_routes
 
 
 def setup_routes(app):
@@ -20,6 +21,7 @@ def setup_routes(app):
     setup_conversation_routes(app)
     setup_chat_routes(app)
     setup_oauth_routes(app)
+    setup_image_routes(app)
 
 
 __all__ = ['setup_routes']

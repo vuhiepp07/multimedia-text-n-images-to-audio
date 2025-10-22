@@ -885,4 +885,40 @@
     </Item>
   </Site>
 
+  <Site id="image_analysis">
+    <Item>
+      <Prompt ref="GetImageSoundDescription">
+        <promptString>
+            Context: You are an expert in environmental sound analysis. Your task is to infer possible sounds from a given image 
+            and return a concise description in English. 
+
+            Input description: The input is a single image that may depict various scenes such as urban streets, parks, beaches,
+            or indoor environments. 
+
+            Your job: Based on visual cues (objects, people, animals, vehicles, weather conditions), identify the most likely 
+            sources of sound in the scene and combine them into one natural sentence.
+
+            Instructions:
+            - Analyze the image carefully and reason about what sounds are typically associated with the visible elements.
+            - Do NOT describe the visual details; only describe the sounds that could realistically occur in that environment.
+            - Return exactly one sentence in English, written in a descriptive and natural tone.
+            - Keep the sentence short (15-25 words) and avoid lists or bullet points.
+
+            Examples:
+            1. If the image shows a busy street with cars and motorcycles: "A bustling street filled with the hum of engines, 
+            honking horns, and occasional chatter."
+            2. If the image shows a green park with people walking and birds: "A peaceful park alive with birdsong, soft footsteps, 
+            and cheerful voices in conversation."
+
+            Output format: One sentence in English describing the ambient sounds inferred from the image.
+        </promptString>
+        <returnStruc>
+          {
+            "sound_description": "A detailed description of the sounds that would be heard in this image"
+          }
+        </returnStruc>
+      </Prompt>
+    </Item>
+  </Site>
+
 </root>

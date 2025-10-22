@@ -33,8 +33,8 @@ PyJWT>=2.8.0
 # openai>=1.12.0
 
 # For Google Gemini/Vertex AI:
-# google-genai>=0.7.1
-# google-cloud-aiplatform>=1.38.0
+google-genai>=0.7.1
+google-cloud-aiplatform>=1.38.0
 
 # For Hugging Face:
 # huggingface_hub>=0.31.0
@@ -59,7 +59,7 @@ PyJWT>=2.8.0
 # numpy
 
 # For Qdrant:
-# qdrant-client>=1.14.0
+qdrant-client>=1.14.0
 
 # For OpenSearch or Snowflake (both use httpx):
 # httpx>=0.28.1
@@ -82,4 +82,4 @@ PyJWT>=2.8.0
 
 # For HNSW (Hierarchical Navigable Small World)
 # Using ChromaDB's fork which has prebuilt Linux wheels
-chroma-hnswlib>=0.7.0
+# chroma-hnswlib>=0.7.0

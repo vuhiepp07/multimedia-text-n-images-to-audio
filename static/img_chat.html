@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sound generation tool</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .img-chat-container {
+      width: 65vw;
+      max-width: 1200px;
+      height: 90vh;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .img-chat-header {
+      background: #4a5568;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .img-chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f7fafc;
+    }
+
+    .img-chat-message {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .img-chat-message.user {
+      justify-content: flex-end;
+    }
+
+    .img-chat-message-content {
+      width: 500px;
+      /* max-width: 70%; */
+      padding: 12px 16px;
+      border-radius: 18px;
+      word-wrap: break-word;
+    }
+
+    .img-chat-message.user .img-chat-message-content {
+      background: #667eea;
+      color: white;
+    }
+
+    .img-chat-message.assistant .img-chat-message-content {
+      background: white;
+      color: #2d3748;
+      border: 1px solid #e2e8f0;
+    }
+
+    .img-chat-message-image {
+      max-width: 400px;
+      max-height: 400px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      object-fit: cover;
+    }
+
+    .img-chat-input-area {
+      padding: 20px;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .img-chat-input-container {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .img-chat-text-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 25px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .img-chat-text-input:focus {
+      border-color: #667eea;
+    }
+
+    .img-chat-image-input {
+      display: none;
+    }
+
+    .img-chat-image-button {
+      width: 45px;
+      height: 45px;
+      background: #667eea;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      /* line-height: 5px; */
+      /* align-items: center; */
+      justify-content: center;
+      transition: background-color 0.2s;
+      font-size: 25px;
+    }
+
+    .img-chat-image-button:hover {
+      background: #5a67d8;
+    }
+
+    .img-chat-image-button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+    }
+
+    .img-chat-send-button {
+      width: 45px;
+      height: 45px;
+      background: #48bb78;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+      font-size: 25px;
+    }
+
+    .img-chat-send-button:hover {
+      background: #38a169;
+    }
+
+    .img-chat-send-button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+    }
+
+    .img-chat-loading {
+      display: none;
+      text-align: center;
+      padding: 10px;
+      color: #667eea;
+      font-style: italic;
+    }
+
+    .img-chat-error {
+      background: #fed7d7;
+      color: #c53030;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="img-chat-container">
+    <div class="img-chat-header">
+      Sound generation tool
+    </div>
+    
+    <div class="img-chat-messages" id="img-chat-messages">
+      <div class="img-chat-message assistant">
+        <div class="img-chat-message-content">
+          Hi, I can help you generate sound base on image content, text content, please input.
+        </div>
+      </div>
+    </div>
+    
+    <div class="img-chat-loading" id="img-chat-loading">
+      Generating description from image...
+    </div>
+
+    <div class="img-chat-loading" id="img-chat-audio-generating" style="display: none;">
+      Generating sound from image...
+    </div>
+    
+    <div class="img-chat-error" id="img-chat-error"></div>
+    
+    <div class="img-chat-input-area">
+      <div class="img-chat-input-container">
+        <input type="text" class="img-chat-text-input" id="img-chat-text-input" placeholder="Describe the sound of something">
+        
+        <input type="file" class="img-chat-image-input" id="img-chat-image-input" accept="image/*">
+        <button class="img-chat-image-button" id="img-chat-image-button" title="Upload image">
+          📷
+        </button>
+        
+        <button class="img-chat-send-button" id="img-chat-send-button" title="Send message">
+          ➤
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    class ImageChatInterface {
+      constructor() {
+        this.messagesContainer = document.getElementById('img-chat-messages');
+        this.textInput = document.getElementById('img-chat-text-input');
+        this.imageInput = document.getElementById('img-chat-image-input');
+        this.imageButton = document.getElementById('img-chat-image-button');
+        this.sendButton = document.getElementById('img-chat-send-button');
+        this.loadingElement = document.getElementById('img-chat-loading');
+        this.errorElement = document.getElementById('img-chat-error');
+        
+        this.currentImage = null;
+        this.setupEventListeners();
+      }
+
+      setupEventListeners() {
+        this.imageButton.addEventListener('click', () => {
+          this.imageInput.click();
+        });
+
+        this.imageInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            this.handleImageUpload(file);
+          }
+        });
+
+        this.sendButton.addEventListener('click', () => {
+          this.sendMessage();
+        });
+
+        this.textInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            this.sendMessage();
+          }
+        });
+      }
+
+      handleImageUpload(file) {
+        if (!file.type.startsWith('image/')) {
+          this.showError('Please choose a valid image.');
+          return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          this.showError('Size file can not exceed 5MB.');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.currentImage = e.target.result;
+          this.addImagePreview(file.name);
+          this.imageButton.disabled = true;
+          this.sendButton.disabled = true;
+          this.sendMessage();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      addImagePreview(fileName) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'img-chat-message user';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'img-chat-message-content';
+        
+        const imageElement = document.createElement('img');
+        imageElement.className = 'img-chat-message-image';
+        imageElement.src = this.currentImage;
+        imageElement.alt = fileName;
+        
+        const textElement = document.createElement('div');
+        textElement.textContent = `Uploaded: ${fileName}`;
+        
+        contentDiv.appendChild(imageElement);
+        contentDiv.appendChild(textElement);
+        messageDiv.appendChild(contentDiv);
+        
+        this.messagesContainer.appendChild(messageDiv);
+        this.scrollToBottom();
+      }
+
+      async sendMessage() {
+        const text = this.textInput.value.trim();
+        if (!text && !this.currentImage) {
+          this.showError('Please type an message or select an image');
+          return;
+        }
+
+        if (text) {
+          this.addUserMessage(text);
+        }
+        
+        // Clear input
+        this.textInput.value = '';
+        this.sendButton.disabled = true;
+        this.imageButton.disabled = true;
+
+        try {
+          if (text && !this.currentImage) {
+            this.showAudioGenerating(true, 'Generating sound from message...');
+            
+            const audioResponse = await this.generateAudio(text);
+            
+            this.showAudioGenerating(false);
+            
+            if (audioResponse.success) {
+              this.addAudioPlayer(audioResponse.audio_url);
+            } else {
+              this.showError('Error generating audio: ' + audioResponse.error);
+            }
+          } 
+          else if (this.currentImage) {
+            this.showLoading(true);
+            
+            const requestData = {
+              query: text || 'Analyze this image',
+              image: this.currentImage
+            };
+
+            const response = await this.sendToBackend(requestData);
+            
+            this.showLoading(false);
+            
+            this.addAssistantMessage(response.message);
+            
+            this.showAudioGenerating(true, 'Generating sound from image...');
+            
+            const audioResponse = await this.generateAudio(response.message);
+            
+            this.showAudioGenerating(false);
+            
+            if (audioResponse.success) {
+              this.addAudioPlayer(audioResponse.audio_url);
+            } else {
+              this.showError('Error generating audio: ' + audioResponse.error);
+            }
+            
+            this.currentImage = null;
+          }
+          
+        } catch (error) {
+          console.error('Error sending message:', error);
+          this.showError('Error occured while sending message, please try again');
+        } finally {
+          this.imageButton.disabled = false;
+          this.sendButton.disabled = false;
+          this.showLoading(false);
+          this.showAudioGenerating(false);
+        }
+      }
+
+      addUserMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'img-chat-message user';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'img-chat-message-content';
+        contentDiv.textContent = text;
+        
+        messageDiv.appendChild(contentDiv);
+        this.messagesContainer.appendChild(messageDiv);
+        this.scrollToBottom();
+      }
+
+      addAssistantMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'img-chat-message assistant';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'img-chat-message-content';
+        contentDiv.textContent = text;
+        
+        messageDiv.appendChild(contentDiv);
+        this.messagesContainer.appendChild(messageDiv);
+        this.scrollToBottom();
+      }
+
+      async sendToBackend(data) {
+        try {
+          const response = await fetch('/api/image/analyze', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              image: data.image,
+              query: data.query
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          
+          if (result.success) {
+            return {
+              message: result.sound_description
+            };
+          } else {
+            throw new Error(result.error || 'Unknown error occurred');
+          }
+        } catch (error) {
+          console.error('Error calling image API:', error);
+          throw error;
+        }
+      }
+
+      showLoading(show) {
+        this.loadingElement.style.display = show ? 'block' : 'none';
+      }
+
+      showAudioGenerating(show, message = 'Generating sound from image...') {
+        const audioGenDiv = document.getElementById('img-chat-audio-generating');
+        if (audioGenDiv) {
+          audioGenDiv.textContent = message;
+          audioGenDiv.style.display = show ? 'block' : 'none';
+        }
+      }
+
+      async generateAudio(soundDescription) {
+        try {
+          const response = await fetch('/api/audio/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sound_description: soundDescription
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          return await response.json();
+        } catch (error) {
+          console.error('Error generating audio:', error);
+          return {
+            success: false,
+            error: error.message
+          };
+        }
+      }
+
+      addAudioPlayer(audioUrl) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'img-chat-message assistant';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'img-chat-message-content';
+        
+        const label = document.createElement('div');
+        label.textContent = '🔊 Generated Audio:';
+        label.style.marginBottom = '8px';
+        label.style.fontWeight = 'bold';
+        contentDiv.appendChild(label);
+        
+        const audioPlayer = document.createElement('audio');
+        audioPlayer.controls = true;
+        audioPlayer.preload = 'metadata';
+        audioPlayer.style.width = '100%';
+        audioPlayer.style.display = 'block';
+        
+        const source = document.createElement('source');
+        source.src = audioUrl;
+        source.type = 'audio/wav';
+        audioPlayer.appendChild(source);
+        
+        audioPlayer.innerHTML += 'Your browser does not support the audio element.';
+        
+        audioPlayer.addEventListener('error', (e) => {
+          console.error('Audio player error:', e);
+          console.error('Failed to load audio from:', audioUrl);
+        });
+        
+        audioPlayer.addEventListener('loadedmetadata', () => {
+          console.log('Audio loaded successfully:', audioUrl);
+        });
+        
+        contentDiv.appendChild(audioPlayer);
+        messageDiv.appendChild(contentDiv);
+        
+        this.messagesContainer.appendChild(messageDiv);
+        this.scrollToBottom();
+      }
+
+      showError(message) {
+        this.errorElement.textContent = message;
+        this.errorElement.style.display = 'block';
+        setTimeout(() => {
+          this.errorElement.style.display = 'none';
+        }, 5000);
+      }
+
+      scrollToBottom() {
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      new ImageChatInterface();
+    });
+  </script>
+</body>
+</html>
+

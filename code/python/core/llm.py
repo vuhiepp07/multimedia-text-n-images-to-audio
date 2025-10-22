@@ -161,7 +161,8 @@ async def ask_llm(
     level: str = "low",
     timeout: int = 8,
     query_params: Optional[Dict[str, Any]] = None,
-    max_length: int = 512
+    max_length: int = 512,
+    image_data: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Route an LLM request to the specified endpoint, with dispatch based on llm_type.
@@ -174,6 +175,7 @@ async def ask_llm(
         timeout: Request timeout in seconds
         query_params: Optional query parameters for development mode provider override
         max_length: Maximum length of the response in tokens (default: 512)
+        image_data: Optional base64 encoded image data for multimodal models
         
     Returns:
         Parsed JSON response from the LLM
@@ -237,10 +239,18 @@ async def ask_llm(
         # Simply call the provider's get_completion method without locking
         # Each provider should handle thread-safety internally
         logger.debug(f"Calling {llm_type} provider completion for endpoint {provider_name} with max_tokens={max_length}")
-        result = await asyncio.wait_for(
-            provider_instance.get_completion(prompt, schema, model=model_id, timeout=timeout, max_tokens=max_length),
-            timeout=timeout
-        )
+        
+        # Check if provider supports image data
+        if image_data and hasattr(provider_instance, 'get_completion_with_image'):
+            result = await asyncio.wait_for(
+                provider_instance.get_completion_with_image(prompt, schema, model=model_id, timeout=timeout, max_tokens=max_length, image_data=image_data),
+                timeout=timeout
+            )
+        else:
+            result = await asyncio.wait_for(
+                provider_instance.get_completion(prompt, schema, model=model_id, timeout=timeout, max_tokens=max_length),
+                timeout=timeout
+            )
         logger.debug(f"{provider_name} response received, size: {len(str(result))} chars")
         return result
         

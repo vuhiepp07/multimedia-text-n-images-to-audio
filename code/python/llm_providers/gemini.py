@@ -243,6 +243,122 @@ class GeminiProvider(LLMProvider):
             )
             raise
 
+    async def get_completion_with_image(
+        self,
+        prompt: str,
+        schema: Dict[str, Any],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 20000,
+        timeout: float = 60.0,
+        high_tier: bool = False,
+        image_data: Optional[str] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        model_to_use = model if model else self.get_model_from_config(high_tier)
+        
+        # Get AI client
+        client = self.get_client()
+
+        logger.debug(f"Sending completion request with image to Gemini API with model: {model_to_use}")
+        
+        try:
+            import base64
+            from datetime import datetime
+            
+            # Decode base64 image data to get size info
+            image_bytes = base64.b64decode(image_data)
+            
+            # Log Base64 data to file
+            try:
+                log_file_path = "imageConvertedLog.txt"
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                with open(log_file_path, "a", encoding="utf-8") as log_file:
+                    log_file.write(f"\n=== IMAGE BASE64 LOG - {timestamp} ===\n")
+                    log_file.write(f"Model: {model_to_use}\n")
+                    log_file.write(f"Image data size: {len(image_bytes)} bytes\n")
+                    log_file.write(f"Base64 data length: {len(image_data)} chars\n")
+                    log_file.write(f"Base64 data (first 200 chars): {image_data[:200]}...\n")
+                    log_file.write(f"Full Base64 data:\n{image_data}\n")
+                    log_file.write("=" * 50 + "\n")
+                logger.info(f"Base64 image data logged to {log_file_path}")
+            except Exception as log_error:
+                logger.warning(f"Failed to log Base64 data: {log_error}")
+            
+            # Clean Base64 data - remove metadata prefix if present
+            clean_base64 = image_data
+            if ',' in image_data:
+                clean_base64 = image_data.split(',')[1]  # Remove "data:image/jpeg;base64," prefix
+            
+            # Create content using Gemini API format
+            contents = [{
+                "parts": [
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": clean_base64
+                        }
+                    },
+                    {
+                        "text": prompt
+                    }
+                ]
+            }]
+            
+            # Update generation config
+            generation_config = {
+                "temperature": temperature,
+                "max_output_tokens": max_tokens,
+                "response_mime_type": "text/plain"
+            }
+            
+            print(f"\n=== GEMINI IMAGE DEBUG ===")
+            print(f"Model: {model_to_use}")
+            print(f"Image data size: {len(image_bytes)} bytes")
+            print(f"Clean Base64 length: {len(clean_base64)} chars")
+            print(f"Prompt length: {len(prompt)} chars")
+            
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda: client.models.generate_content(
+                        model=model_to_use,
+                        contents=contents,
+                        config=generation_config
+                    )
+                ),
+                timeout=timeout
+            )
+            
+            print(f"Image response received: {response is not None}")
+            
+            # Extract text from AI response
+            content = None
+            if response:
+                if hasattr(response, 'text') and response.text:
+                    content = response.text
+                elif hasattr(response, 'candidates') and response.candidates:
+                    candidate = response.candidates[0]
+                    if hasattr(candidate, 'content') and candidate.content:
+                        if hasattr(candidate.content, 'parts') and candidate.content.parts:
+                            content = candidate.content.parts[0].text
+                        elif hasattr(candidate.content, 'text'):
+                            content = candidate.content.text
+            
+            if not content:
+                logger.error("No content received from Gemini image completion")
+                return {}
+            
+            print(f"Extracted content length: {len(content)}")
+            print(f"First 200 chars: {content[:200]}...")
+            
+            # Return AI sound description response
+            logger.debug(f"Successfully received text response from Gemini image completion")
+            return {"sound_description": content.strip()}
+                
+        except Exception as e:
+            logger.error(f"Gemini image completion failed: {type(e).__name__}: {str(e)}")
+            raise
+
 
 # Create a singleton instance
 provider = GeminiProvider()
